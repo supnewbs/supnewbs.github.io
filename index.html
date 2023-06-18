@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Chatroom</title>
+    <style>
+      #messages {
+        height: 300px;
+        overflow-y: scroll;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="signup">
+      <h2>Sign up</h2>
+      <input type="text" placeholder="Username" id="signup-username" />
+      <input type="password" placeholder="Password" id="signup-password" />
+      <button onclick="signup()">Sign up</button>
+    </div>
+    <div id="login">
+      <h2>Login</h2>
+      <input type="text" placeholder="Username" id="login-username" />
+      <input type="password" placeholder="Password" id="login-password" />
+      <button onclick="login()">Login</button>
+    </div>
+    <div id="chat" style="display: none">
+      <h2>Chatroom</h2>
+      <div id="messages"></div>
+      <input type="text" placeholder="Message" id="message" />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io('https://supnewbsserver.supnewbs.repl.co/');
+
+      function signup() {
+        const username = document.getElementById('signup-username').value;
+        const password = document.getElementById('signup-password').value;
+        socket.emit('signup', { username, password });
+      }
+
+      function login() {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        socket.emit('login', { username, password });
+      }
+
+      function sendMessage() {
+        const message = document.getElementById('message').value;
+        socket.emit('message', {
+          username: localStorage.getItem('username'),
+          message,
+        });
+        document.getElementById('message').value = '';
+      }
+
+      socket.on('signupSuccess', () => {
+        alert('Signup successful. Please login.');
+      });
+
+      socket.on('signupError', () => {
+        alert('Username already taken.');
+      });
+
+      socket.on('loginSuccess', () => {
+        localStorage.setItem('username', document.getElementById('login-username').value);
+        document.getElementById('signup').style.display = 'none';
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('chat').style.display = 'block';
+      });
+
+      socket.on('loginError', () => {
+        alert('Invalid username or password.');
+      });
+
+      socket.on('message', (data) => {
+        const { username, message } = data;
+        const messages = document.getElementById('messages');
+        const newMessage = document.createElement('div');
+        newMessage.innerHTML = `${username}: ${message}`;
+        messages.appendChild(newMessage);
+      });
+    </script>
+  </body>
+</html>
